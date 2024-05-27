@@ -1,0 +1,136 @@
+#include <Adafruit_NeoPixel.h>
+
+int L1 = A1;
+int L2 = A2;
+int L3 = A3;
+
+int relay2 = 2;
+int relay3 = 3;
+int relay4 = 4;
+int relay5 = 5;
+int relay6 = 6;
+
+#define LED_PIN 7
+#define NUM_LEDS 6
+
+Adafruit_NeoPixel strip(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(relay2, OUTPUT);
+  pinMode(relay3, OUTPUT);
+  pinMode(relay4, OUTPUT);
+  pinMode(relay5, OUTPUT);
+  pinMode(relay6, OUTPUT);
+
+  strip.begin();
+  strip.show();
+  strip.setBrightness(50);
+}
+
+void loop() {
+  // Read analog values once
+
+  int fixedReferenceL = A0; //fixed reference for lower branch measurements
+
+  int rawValue1 = analogRead(L1); //raw value for lower L1
+  int rawValue2 = analogRead(L2); //raw value for lower L2
+  int rawValue3 = analogRead(L3); //raw value for lower L3
+
+  // Lower Branch
+
+  digitalWrite(relay2, LOW); //relay off for lower branch measurements
+  digitalWrite(relay3, LOW); //relay off, no need in lower branch
+  digitalWrite(relay4, LOW); //relay off for lower input measurements
+  digitalWrite(relay5, LOW); //relay off, no need in lower branch
+  digitalWrite(relay6, LOW); //relay off, no need in lower branch
+
+  int rawValueLower = analogRead(fixedReferenceL);
+
+  // Calculations for lower input branch
+  // Measures voltage from each pin
+
+  float voltageRefIn = map(rawValueLower, 0, 1023, 0, 5000) / 1000.0;
+  float voltage1 = map(rawValue1, 0, 1023, 0, 5000) / 1000.0;
+  float voltage2 = map(rawValue2, 0, 1023, 0, 5000) / 1000.0;
+  float voltage3 = map(rawValue3, 0, 1023, 0, 5000) / 1000.0;
+
+  // Subtracts measurement values from L1, L2, and L3 from reference value to calculate the voltage drop
+  // Absolute value is taken to exclude any negative values
+
+  float voltageDrop1 = abs(voltageRefIn - voltage1); //voltage drop in terminal L1
+  float voltageDrop2 = abs(voltageRefIn - voltage2); //voltage drop in terminal L2
+  float voltageDrop3 = abs(voltageRefIn - voltage3); //voltage drop in terminal L3
+
+  // LED control and serial print for lower branch terminal L1
+
+  if (voltageDrop1 >= 0 && voltageDrop1 <= 0.1) {
+    strip.setPixelColor(0, strip.Color(255, 0, 0)); // Red for shorted
+    Serial.print("Lower L1: SHORTED, ");
+  }
+  
+  else if (voltageDrop1 >= 0.3 && <= 0.4) {
+    strip.setPixelColor(0, strip.Color(0, 255, 0)); // Green for okay
+    Serial.print("Lower L1: OKAY, ");
+  }
+  
+  else {
+    strip.setPixelColor(0, strip.Color(0, 0, 255)); // Blue for open circuit
+    Serial.print("Lower L1: OPEN CIRCUIT, ");
+  }
+
+  strip.show();
+  Serial.print(voltageDrop1, 3);
+  Serial.println(); //Move to new line
+
+  delay(1000);
+
+  // LED control and serial print for lower branch terminal L2
+
+  if (voltageDrop1 >= 0 && voltageDrop1 <= 0.1) {
+    strip.setPixelColor(0, strip.Color(255, 0, 0)); // Red for shorted
+    Serial.print("Lower L2: SHORTED, ");
+  }
+  
+  else if (voltageDrop1 >= 0.3 && <= 0.4) {
+    strip.setPixelColor(0, strip.Color(0, 255, 0)); // Green for okay
+    Serial.print("Lower L2: OKAY, ");
+  }
+  
+  else {
+    strip.setPixelColor(0, strip.Color(0, 0, 255)); // Blue for open circuit
+    Serial.print("Lower L2: OPEN CIRCUIT, ");
+  }
+
+  strip.show();
+  Serial.print(voltageDrop2, 3);
+  Serial.println(); //Move to new line
+
+  delay(1000);
+
+  // LED control and serial print for lower branch terminal L3
+
+  if (voltageDrop3 >= 0 && voltageDrop1 <= 0.1) {
+    strip.setPixelColor(0, strip.Color(255, 0, 0)); // Red for shorted
+    Serial.print("Lower L1: SHORTED, ");
+  }
+  
+  else if (voltageDrop3 >= 0.3 && <= 0.4) {
+    strip.setPixelColor(0, strip.Color(0, 255, 0)); // Green for okay
+    Serial.print("Lower L1: OKAY, ");
+  }
+  
+  else {
+    strip.setPixelColor(0, strip.Color(0, 0, 255)); // Blue for open circuit
+    Serial.print("Lower L3: OPEN CIRCUIT, ");
+  }
+
+  strip.show();
+  Serial.print(voltageDrop3, 3);
+  Serial.println(); //Move to new line
+
+  delay(1000);
+
+}
+
